@@ -1,4 +1,40 @@
+let nickname = "";
+let nivel = 1;
+
+
+const fondos = [
+    "#1E3A8A",
+    "#065F46",
+    "#7C2D12",
+    "#78350F",
+    "#3B0764",
+    "#9D174D"
+];
+
+let indiceFondo = 0;
+
+
+function cambiarFondo() {
+    indiceFondo = (indiceFondo + 1) % fondos.length;
+    document.getElementById("juego-contenedor").style.backgroundColor = fondos[indiceFondo];
+}
+
+
+let velocidadObstaculo = 10;
+
+function subirNivel() {
+    nivel++;
+    document.getElementById("nivel").textContent = "Nivel: " + nivel;
+
+    velocidadObstaculo += 2;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+
+    nickname = prompt("Escribe tu nickname:");
+    if (!nickname) nickname = "Jugador";
+    document.getElementById("nickname").textContent = "Jugador: " + nickname;
+
     const pixelBot = document.getElementById("pixel-bot");
     const juegoContenedor = document.getElementById("juego-contenedor");
     const mensajeJuego = document.getElementById("mensaje-juego");
@@ -6,16 +42,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const suelo = document.getElementById("suelo");
 
     let isJumping = false;
-    let gravity = 0.9;
     let botBottom = 30;
     let score = 0;
     let gameOver = true;
     let obstacleInterval;
     let gameLoopInterval;
 
-    const gameWith = 900;
-
-    function jum() {
+    const gameWidth = 900;
+    function jump() {
         if (isJumping) return;
         isJumping = true;
         let jumpHeight = 150;
@@ -38,64 +72,82 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             botBottom += jumpSpeed;
             currentJumpHeight += jumpSpeed;
-            pixelBot.style.bottom = botBottom + px;
+            pixelBot.style.bottom = botBottom + 'px';
         }, 20);
     }
+
     function generarObstaculo() {
-        if (gameOver) {
-            return;
-        }
-        let obstaclePosition = gameWith;
+        if (gameOver) return;
+
+        let obstaclePosition = gameWidth;
         const obstacle = document.createElement('div');
         obstacle.classList.add('obstaculo');
         juegoContenedor.appendChild(obstacle);
 
-        let randomTime = Math.random() * 2000 + 1000;
         const moverObstaculo = setInterval(() => {
+
             if (obstaclePosition < -30) {
                 clearInterval(moverObstaculo);
                 juegoContenedor.removeChild(obstacle);
+
                 score++;
                 puntuacionDisplay.textContent = 'Puntuación: ' + score;
+
+                if (score % 5 === 0) {
+                    cambiarFondo();
+                    subirNivel();
+                }
             }
 
-            if (
-                obstaclePosition > 50 && obstaclePosition < (100)
-                &&
-                botBottom < (80)
-
-            ) {
+            if (obstaclePosition > 50 && obstaclePosition < 100 && botBottom < 80) {
                 clearInterval(moverObstaculo);
                 clearInterval(gameLoopInterval);
                 clearInterval(obstacleInterval);
                 gameOver = true;
-                mensajeJuego = 'GAME OVER! Puntuación final: ' + score;
-                mensajeJuego += '\n Presione ESPACIO para reiniciar';
+
+                mensajeJuego.textContent =
+                    'GAME OVER \n\n' +
+                    'Jugador: ' + nickname + '\n' +
+                    'Nivel alcanzado: ' + nivel + '\n' +
+                    'Puntuación final: ' + score + '\n\n' +
+                    'Presione ESPACIO para reiniciar';
+
                 mensajeJuego.style.display = 'block';
                 suelo.style.animationPlayState = 'pause';
             }
-            obstaclePosition -= 10;
+
+            obstaclePosition -= velocidadObstaculo;
             obstacle.style.left = obstaclePosition + 'px';
 
         }, 20);
     }
-    function inicarJuego() {
+
+    function iniciarJuego() {
+
         document.querySelectorAll('.obstaculo').forEach(obs => obs.remove());
+
         score = 0;
-        puntuacionDisplay.textContent = '   Puntuacion: 0';
+        nivel = 1;
+        velocidadObstaculo = 10;
+
+        document.getElementById("nivel").textContent = "Nivel: 1";
+        puntuacionDisplay.textContent = 'Puntuación: 0';
+
         botBottom = 30;
         pixelBot.style.bottom = botBottom + 'px';
+
         isJumping = false;
         gameOver = false;
+
         mensajeJuego.style.display = 'none';
         suelo.style.animationPlayState = 'running';
 
-        obstacleInterval = setInterval(generarObstaculo, 2000);
+        obstacleInterval = setInterval(generarObstaculo, 1800);
     }
-    document.addEventListener('keydown', (e) => {
-        if (e.code == 'Space') {
-            inicarJuego();
 
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+            iniciarJuego();
         } else {
             jump();
         }
